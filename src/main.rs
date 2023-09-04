@@ -60,14 +60,20 @@ fn print_home_page() {
 	let mut console_divider = String::new();
 	if let Some((term_width, term_height)) = term_size::dimensions() {
 		term.write_line(
-			console::pad_str("Home", term_width, console::Alignment::Center, None).as_ref(),
+			console::pad_str(
+				&Colour::Blue.paint("Home").to_string() as &str,
+				term_width,
+				console::Alignment::Center,
+				None,
+			)
+			.as_ref(),
 		);
 		for i in 0..term_width {
 			&console_divider.push_str("-");
 		}
 	}
 
-	println!("{}", Style::new().dimmed().paint(console_divider));
+	println!("{}", Style::new().dimmed().paint(&console_divider));
 
 	let todos = get_all_todos();
 
@@ -77,6 +83,7 @@ fn print_home_page() {
 		Style::new().italic().underline().paint("Completed"),
 		Style::new().italic().underline().paint("Todo")
 	);
+
 	for todo in todos.iter() {
 		println!(
 			"[{}]	{}		{}",
@@ -90,6 +97,8 @@ fn print_home_page() {
 			Style::new().bold().paint(todo.title.to_string())
 		);
 	}
+
+	println!("{}", Style::new().dimmed().paint(&console_divider));
 }
 
 /// Returns all todos, sorted by (ascending) index
