@@ -1,6 +1,7 @@
 use ansi_term::{Colour, Style};
 use anyhow::Result;
 use clap::{Parser, Subcommand};
+use console::Term;
 
 #[derive(Parser)]
 #[command(author, version, about, long_about = None)]
@@ -24,6 +25,19 @@ struct Todo {
 	completed: bool,
 }
 
+impl Todo {
+	fn new(index: i32, title: String) -> Todo {
+		Todo {
+			index: index,
+			title: title,
+			completed: false,
+		}
+	}
+	fn complete_todo(&mut self) {
+		self.completed = true;
+	}
+}
+
 fn main() -> Result<()> {
 	// In the case that no args are passed, just print the home page and exit
 	if std::env::args().len() == 1 {
@@ -42,7 +56,19 @@ fn main() -> Result<()> {
 }
 
 fn print_home_page() {
-	let style = Style::new().bold();
+	let term = Term::stdout();
+	let mut console_divider = String::new();
+	if let Some((term_width, term_height)) = term_size::dimensions() {
+		term.write_line(
+			console::pad_str("Home", term_width, console::Alignment::Center, None).as_ref(),
+		);
+		for i in 0..term_width {
+			&console_divider.push_str("-");
+		}
+	}
+
+	println!("{}", Style::new().dimmed().paint(console_divider));
+
 	let todos = get_all_todos();
 
 	println!(
@@ -60,7 +86,8 @@ fn print_home_page() {
 			} else {
 				Colour::Red.paint("no")
 			},
-			style.paint(todo.title.to_string())
+			// Bold does not work on all terminals
+			Style::new().bold().paint(todo.title.to_string())
 		);
 	}
 }
