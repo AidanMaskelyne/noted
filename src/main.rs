@@ -58,6 +58,7 @@ fn main() -> Result<()> {
 fn print_home_page() {
 	let term = Term::stdout();
 	let mut console_divider = String::new();
+
 	if let Some((term_width, term_height)) = term_size::dimensions() {
 		term.write_line(
 			console::pad_str(
@@ -68,8 +69,8 @@ fn print_home_page() {
 			)
 			.as_ref(),
 		);
-		for i in 0..term_width {
-			&console_divider.push_str("-");
+		for _ in 0..term_width {
+			console_divider.push_str("-");
 		}
 	}
 
