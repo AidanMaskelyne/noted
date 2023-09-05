@@ -2,29 +2,63 @@ use ansi_term::{Colour, Style};
 use anyhow::Result;
 use clap::{Parser, Subcommand};
 use console::Term;
+use std::path::PathBuf;
 
 #[derive(Parser)]
 #[command(author, version, about, long_about = None)]
 struct Args {
 	#[command(subcommand)]
-	action: Option<ActionOptions>,
+	command: Option<Commands>,
 }
 
 #[derive(Subcommand)]
-enum ActionOptions {
-	/// Adds a new note
-	Add {
-		/// Name of new note; will default to current system time
+enum Commands {
+	/// Interact with your todos
+	Todos {
+		#[command(subcommand)]
+		action: TodoActions,
+	},
+
+	/// Interact with your notes
+	Notes {
+		#[command(subcommand)]
+		action: NoteActions,
+	},
+}
+
+#[derive(Debug, Subcommand)]
+enum TodoActions {
+	/// Add a new todo
+	New {
+		/// Name of new todo
+		name: String,
+	},
+
+	/// Marks a todo as completed
+	Do {
+		/// Index of the todo to be marked as completed
+		index: i32,
+	},
+}
+
+#[derive(Subcommand)]
+enum NoteActions {
+	/// Creates a new note
+	New {
+		/// Optional name of new note (defaults to system time)
 		name: Option<String>,
 	},
 }
 
+#[derive(Debug, Clone)]
 struct Todo {
 	index: i32,
 	title: String,
 	completed: bool,
 }
 
+// Eventually index will not need to be passed to the constructor, it will be calculated from exists todos.
+// This is just for testing purposes
 impl Todo {
 	fn new(index: i32, title: String) -> Todo {
 		Todo {
@@ -33,8 +67,9 @@ impl Todo {
 			completed: false,
 		}
 	}
-	fn complete_todo(&mut self) {
+	fn mark_as_completed(&mut self) {
 		self.completed = true;
+		write_todo(self.clone());
 	}
 }
 
@@ -47,14 +82,29 @@ fn main() -> Result<()> {
 
 	let args = Args::parse();
 
-	match &args.action {
-		Some(ActionOptions::Add { name }) => {}
+	match &args.command {
+		Some(Commands::Todos { action }) => match action {
+			TodoActions::New { name } => {
+				create_new_todo(name.clone());
+			}
+			TodoActions::Do { index } => {
+				let mut completed_todo = get_todo(index);
+				completed_todo.mark_as_completed();
+			}
+		},
+		Some(Commands::Notes { action }) => match action {
+			NoteActions::New { name } => match name {
+				Some(name) => println!("Creating note with title: {name}"),
+				None => println!("Creating note with default title"),
+			},
+		},
 		None => {}
 	}
 
 	return Ok(());
 }
 
+/// Prints the home page when the application is run without any arguments
 fn print_home_page() {
 	let term = Term::stdout();
 	let mut console_divider = String::new();
@@ -69,6 +119,7 @@ fn print_home_page() {
 			)
 			.as_ref(),
 		);
+
 		for _ in 0..term_width {
 			console_divider.push_str("-");
 		}
@@ -115,5 +166,22 @@ fn get_all_todos() -> Vec<Todo> {
 			title: String::from("Fetch laundry in"),
 			completed: true,
 		},
+		Todo::new(3, String::from("Make dinner")),
 	]
 }
+
+fn setup_todos_storage(path: Option<PathBuf>) {
+	todo!();
+}
+
+fn create_new_todo(todo_name: String) {
+	println!("Creating new todo \"{todo_name}\"");
+}
+
+/// Reads the stored todos and searches for the one that matches the supplied index
+fn get_todo(index: &i32) -> Todo {
+	Todo::new(4, String::from("wasd"))
+}
+
+/// Write the provided Todo object into the storage location
+fn write_todo(todo: Todo) {}
